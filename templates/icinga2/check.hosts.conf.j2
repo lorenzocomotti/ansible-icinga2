@@ -1,0 +1,183 @@
+/*
+ * {{ hostvars[item]['ansible_hostname'] }} checks definition
+ */
+
+object HostGroup "{{ hostvars[item]['ansible_hostname'] }}" {
+  display_name = "{{ hostvars[item]['ansible_hostname'] }}"
+}
+
+/*
+ * {{ hostvars[item]['ansible_hostname'] }} host definition
+ */
+
+object Host "{{ hostvars[item]['ansible_hostname'] }}" {
+  import "generic-host"
+  display_name = "{{ hostvars[item]['ansible_hostname'] }}"
+  address = "{{ item }}"
+  vars.notification_mail = "true"
+{% if icinga2_notification_telegram is defined %}
+  vars.notification_telegram = "true"
+{% endif %}
+
+{% if icinga2_host_url_check is defined %}
+{% for obj in icinga2_host_url_check %}
+{% if hostvars[item]['inventory_hostname'] in groups[obj.ansible_group] %}
+  vars.http_url["{{ obj.url }}"] = {
+    http_uri = "{{ obj.path }}"
+    {% if obj.backup_downtime is defined %}
+      backup_downtime = "{{ obj.backup_downtime }}"
+    {% endif %}
+  }
+{% endif %}
+{% endfor %}
+{% endif %}
+  
+{% if icinga2_host_mysql_check is defined %}
+{% for obj in icinga2_host_mysql_check %}
+{% if hostvars[item]['inventory_hostname'] in groups[obj.group] %}
+  vars.mysql = true
+  vars.mysql_username = "{{ obj.mysql_username }}"
+  vars.mysql_password = "{{ obj.mysql_password }}"
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if icinga2_host_elasticsearch_check is defined %}
+{% for obj in icinga2_host_elasticsearch_check %}
+{% if hostvars[item]['inventory_hostname'] in groups[obj.group] %}
+  vars.elasticsearch = true
+  vars.elasticsearch_port = "{{ obj.es_port }}"
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if icinga2_host_hadoop_check is defined %}
+{% for obj in icinga2_host_hadoop_check %}
+{% if hostvars[item]['inventory_hostname'] in groups[obj.group] %}
+  vars.hadoop = true
+  vars.hadoop_nodes_warning = "{{ obj.warning_nodes }}"
+  vars.hadoop_nodes_critical = "{{ obj.critical_nodes }}"
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if icinga2_host_file_count_check is defined %}
+{% for obj in icinga2_host_file_count_check %}
+{% if hostvars[item]['inventory_hostname'] in groups[obj.group] %}
+  vars.filecount_path["{{ obj.filecount_path }}"] = {
+    file_count_type = "{{ obj.file_count_type }}"
+    file_count_subs = "{{ obj.file_count_subs }}"
+    file_count_warntype = "{{ obj.file_count_warntype }}"
+    file_count_warncount = "{{ obj.file_count_warncount }}"
+    file_count_critcount = "{{ obj.file_count_critcount }}"
+  }
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if icinga2_host_postgresql_check is defined %}
+{% for obj in icinga2_host_postgresql_check %}
+{% if hostvars[item]['inventory_hostname'] in groups[obj.group] %}
+  vars.postgresql_host = "{{ obj.postgresql_host }}"
+  vars.postgresql_port = "{{ obj.postgresql_port }}"
+  vars.postgresql_user = "{{ obj.postgresql_user }}"
+  vars.postgresql_database = "{{ obj.postgresql_database }}"
+{% if obj.postgresql_connection is defined %}
+  vars.postgresql_connection = true
+{% endif %}
+{% if obj.postgresql_backend_status is defined %}
+  vars.postgresql_backend_status = true
+{% endif %}
+{% if obj.postgresql_is_master is defined %}
+  vars.postgresql_is_master = true
+{% endif %}
+{% if obj.postgresql_is_hot_standby is defined %}
+  vars.postgresql_is_hot_standby = true
+{% endif %}
+{% if obj.postgresql_backends is defined %}
+  vars.postgresql_backends =  true
+  vars.postgresql_backends_warning = "{{ obj.postgresql_backends_warning }}"
+  vars.postgresql_backends_critical = "{{ obj.postgresql_backends_critical }}"
+{% endif %}
+{% if obj.postgresql_streaming_delta is defined %}
+  vars.postgresql_streaming_delta = true
+  vars.postgresql_streaming_delta_warning = "{{ obj.postgresql_streaming_delta_warning }}"
+  vars.postgresql_streaming_delta_critical = "{{ obj.postgresql_streaming_delta_critical }}"
+{% endif %}
+{% if obj.postgresql_longest_query is defined %}
+  vars.postgresql_longest_query = true
+  vars.postgresql_longest_query_warning = "{{ obj.postgresql_longest_query_warning }}"
+  vars.postgresql_longest_query_critical = "{{ obj.postgresql_longest_query_critical }}"
+{% endif %}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if icinga2_host_activemq_check is defined %}
+{% for obj in icinga2_host_activemq_check %}
+{% if hostvars[item]['inventory_hostname'] in groups[obj.group] %}
+  vars.activemq_address["{{ obj.activemq_host }}"] = {
+    activemq_port = "{{ obj.activemq_port }}"
+    activemq_user = "{{ obj.activemq_user }}"
+    activemq_password = "{{ obj.activemq_password }}"
+{% if obj.activemq_queue_type is defined %}
+    activemq_queue = true
+    activemq_queue_type = "{{ obj.activemq_queue_type }}"
+{% if obj.activemq_name is defined %}
+    activemq_queue_name = "{{ obj.activemq_queue_name }}"
+{% endif %}
+    activemq_queue_warning = "{{ obj.activemq_queue_warning }}"
+    activemq_queue_critical = "{{ obj.activemq_queue_critical }}"
+{% endif %}
+  }
+{% endif %}
+{% endfor %}
+{% endif %}
+
+  vars.os = "Linux"
+  vars.endpoint = "{{ hostvars[item]['ansible_hostname'] }}"
+  groups =["{{ hostvars[item]['ansible_hostname'] }}"]
+}
+
+/*
+ * {{ hostvars[item]['ansible_hostname'] }} services definition
+ */
+
+apply Service "check disk" {
+  import "generic-service"
+  display_name = "Check Disk"
+  vars.notification_mail = "true"
+{% if icinga2_notification_telegram is defined %}
+  vars.notification_telegram = "true"
+{% endif %}
+
+  check_command = "disk"
+  vars.disk_wfree = "10%"
+  vars.disk_cfree = "5%"
+  vars.disk_mountpoint = "true"
+  vars.disk_all = "true"
+  vars.disk_ignore_eregi_path = ["/var/lib/docker/*", "/run/docker/netns/*"]
+
+  command_endpoint = host.vars.endpoint
+  assign where "{{ hostvars[item]['ansible_hostname'] }}" in host.groups
+}
+
+apply Service "check load" {
+  import "generic-service"
+  display_name = "Check Load"
+  vars.notification_mail = "true"
+{% if icinga2_notification_telegram is defined %}
+  vars.notification_telegram = "true"
+{% endif %}
+
+  check_command = "load"
+  vars.load_wload1 = "{{ 3 * icinga_load_threshold_check }}"
+  vars.load_wload5 = "{{ 2 * icinga_load_threshold_check }}"
+  vars.load_wload15 = "{{ 1 * icinga_load_threshold_check }}"
+  vars.load_cload1 = "{{ 6 * icinga_load_threshold_check }}"
+  vars.load_cload5 = "{{ 5 * icinga_load_threshold_check }}"
+  vars.load_cload15 = "{{ 4 * icinga_load_threshold_check }}"
+
+  command_endpoint = host.vars.endpoint
+  assign where "{{ hostvars[item]['ansible_hostname'] }}" in host.groups
+}

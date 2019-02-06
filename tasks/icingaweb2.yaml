@@ -1,0 +1,99 @@
+---
+
+- name: Xenial - Install icingaweb2 webserver
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - php7.0
+    - php7.0-gd
+    - php7.0-intl
+    - php7.0-xml
+    - php7.0-mysql
+    - php7.0-pgsql
+    - php-imagick
+  when: ansible_distribution_release == "xenial"
+
+- name: Xenial - Install icingaweb2 webserver
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - apache2
+    - libapache2-mod-php7.0
+  when: ansible_distribution_release == "xenial" and
+        icingaweb2_webserver
+
+- name: Xenial - Setup php timezone
+  lineinfile:
+    dest: /etc/php/7.0/apache2/php.ini
+    regexp: ";date.timezone ="
+    line: "date.timezone = {{ server_timezone }}"
+  notify: Restart apache2
+  when: ansible_distribution_release == "xenial" and
+        icingaweb2_webserver
+
+- name: Trusty - Install icingaweb2 webserver
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - php5
+    - php5-gd
+    - php5-intl
+    - php5-xmlrpc
+    - php5-mysql
+    - php5-pgsql
+    - php5-imagick
+  when: ansible_distribution_release == "trusty"
+
+- name: Trusty - Install icingaweb2 webserver
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - apache2
+    - libapache2-mod-php5
+  when: ansible_distribution_release == "trusty" and
+        icingaweb2_webserver
+
+- name: Trusty - Setup php timezone
+  lineinfile:
+    dest: /etc/php5/apache2/php.ini
+    regexp: ";date.timezone ="
+    line: "date.timezone = {{ server_timezone }}"
+  notify: Restart apache2
+  when: ansible_distribution_release == "trusty" and
+        icingaweb2_webserver
+
+- name: Install icingaweb2
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - icingaweb2
+    - icingacli
+  register: icingaweb2_bootstrap
+
+- name: Create icingaweb2 setup token
+  command: icingacli setup token create
+  when: icingaweb2_bootstrap.changed
+
+- name: Get icingaweb2 setup token
+  command: icingacli setup token show
+  register: icingaweb2_token
+  when: icingaweb2_bootstrap.changed
+ 
+- name: Import icinga2 mysql schema
+  mysql_db:
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    state: import
+    name: "{{ icingaweb2_mysql_database }}"
+    target: /usr/share/icingaweb2/etc/schema/mysql.schema.sql
+  when: icingaweb2_bootstrap.changed
+
+- name: Set up icingaweb2 web wizard
+  debug:
+    msg: "Go to http://<your-ip>/icingaweb2/setup. {{ icingaweb2_token.stdout }}"
+  when: icingaweb2_bootstrap.changed

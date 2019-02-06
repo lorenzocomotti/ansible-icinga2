@@ -1,0 +1,15 @@
+/*
+ * Master zone
+ * Master endpoint definition
+ */
+
+object Endpoint "monitoring-master" {
+}
+
+object Zone "master" {
+        endpoints = [ "monitoring-master" ]
+}
+
+object Zone "global-templates" {
+        global = true
+}

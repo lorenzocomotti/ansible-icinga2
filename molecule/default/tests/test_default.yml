@@ -1,0 +1,13 @@
+---
+package:
+  icinga2:
+    installed: true
+port:
+  tcp:80:
+    listening: true
+    ip:
+      - 0.0.0.0
+service:
+  icinga2:
+    enabled: true
+    running: true

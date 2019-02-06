@@ -1,0 +1,12 @@
+# Molecule managed
+
+---
+all:
+  hosts:
+    master: &id001
+      ansible_connection: docker
+icinga2_master:
+  hosts:
+    master: *id001
+ungrouped:
+  vars: {}

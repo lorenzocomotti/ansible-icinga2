@@ -1,0 +1,241 @@
+## OPTIONAL SERVICE DEFINITION ##
+
+apply Service "URL Check - " for (http_vhost => config in host.vars.http_url) {
+  import "generic-service"
+  check_command = "http"
+  vars.notification_mail = "true"
+{% if icinga2_notification_telegram is defined %}
+  vars.notification_telegram = "true"
+{% endif %}
+
+  vars += config
+  notes = "HTTP checks for " + http_vhost
+  vars.http_vhost = http_vhost
+  vars.http_uri = config.http_uri
+  vars.backup_downtime = config.backup_downtime
+
+  assign where host.vars.http_url
+}
+
+apply Service "Mysql Check" {
+  import "generic-service"
+  check_command = "mysql"
+  vars.notification_mail = "true"
+{% if icinga2_notification_telegram is defined %}
+  vars.notification_telegram = "true"
+{% endif %}
+
+  vars.mysql_user = host.vars.mysql_username
+  vars.mysql_password = host.vars.mysql_password
+
+  assign where host.vars.mysql == true
+}
+
+apply Service "Elasticsearch Check" {
+  import "generic-service"
+  check_command = "elasticsearch-server"
+  vars.notification_mail = "true"
+{% if icinga2_notification_telegram is defined %}
+  vars.notification_telegram = "true"
+{% endif %}
+
+  vars.elasticsearch_host = host.vars.endpoint
+  vars.elasticsearch_port = host.vars.elasticsearch_port
+
+  assign where host.vars.elasticsearch == true
+}
+
+apply Service "Hadoop Check" {
+  import "generic-service"
+  check_command = "hadoop-server"
+  vars.notification_mail = "true"
+{% if icinga2_notification_telegram is defined %}
+  vars.notification_telegram = "true"
+{% endif %}
+
+  vars.hadoop_nodes_warning = host.vars.hadoop_nodes_warning
+  vars.hadoop_nodes_critical = host.vars.hadoop_nodes_critical
+  command_endpoint = host.vars.endpoint
+
+  assign where host.vars.hadoop == true
+}
+
+apply Service "File Count Check" for (folder => config in host.vars.filecount_path) {
+  import "generic-service"
+  check_command = "file-count"
+  vars.notification_mail = "true"
+{% if icinga2_notification_telegram is defined %}
+  vars.notification_telegram = "true"
+{% endif %}
+
+  vars += config
+  notes = "File Count Check for folder"
+  vars.file_count_type = config.file_count_type
+  vars.file_count_subs = config.file_count_subs
+  vars.file_count_warntype = config.file_count_warntype
+  vars.file_count_warncount = config.file_count_warncount
+  vars.file_count_critcount = config.file_count_critcount
+  vars.file_count_dir = folder
+  command_endpoint = host.vars.endpoint
+
+  assign where host.vars.filecount_path
+}
+
+apply Service "Postgresql Connection Check" {
+  import "generic-service"
+  check_command = "pgactivity"
+  vars.notification_mail = "true"
+  vars.notification_telegram = "true"
+
+  vars.pgactivity_host = host.vars.postgresql_host
+  vars.pgactivity_user = host.vars.postgresql_user
+  vars.pgactivity_port = host.vars.postgresql_port
+  vars.pgactivity_database = host.vars.postgresql_database
+  vars.pgactivity_warning = host.vars.postgresql_backends_warning
+  vars.pgactivity_critical = host.vars.postgresql_backends_critical
+  vars.pgactivity_service = "connection"
+  command_endpoint = host.vars.endpoint
+
+  assign where host.vars.postgresql_connection == true
+}
+
+apply Service "Postgresql Is Hot Standby Check" {
+  import "generic-service"
+  check_command = "pgactivity"
+  vars.notification_mail = "true"
+  vars.notification_telegram = "true"
+
+  vars.pgactivity_host = host.vars.postgresql_host
+  vars.pgactivity_user = host.vars.postgresql_user
+  vars.pgactivity_port = host.vars.postgresql_port
+  vars.pgactivity_database = host.vars.postgresql_database
+  vars.pgactivity_service = "is_hot_standby"
+  command_endpoint = host.vars.endpoint
+
+  assign where host.vars.postgresql_is_hot_standby == true
+}
+
+apply Service "Postgresql Is Master Check" {
+  import "generic-service"
+  check_command = "pgactivity"
+  vars.notification_mail = "true"
+  vars.notification_telegram = "true"
+
+  vars.pgactivity_host = host.vars.postgresql_host
+  vars.pgactivity_user = host.vars.postgresql_user
+  vars.pgactivity_port = host.vars.postgresql_port
+  vars.pgactivity_database = host.vars.postgresql_database
+  vars.pgactivity_service = "is_master"
+  command_endpoint = host.vars.endpoint
+
+  assign where host.vars.postgresql_is_master == true
+}
+
+apply Service "Postgresql Is Replay Paused Check" {
+  import "generic-service"
+  check_command = "pgactivity"
+  vars.notification_mail = "true"
+  vars.notification_telegram = "true"
+
+  vars.pgactivity_host = host.vars.postgresql_host
+  vars.pgactivity_user = host.vars.postgresql_user
+  vars.pgactivity_port = host.vars.postgresql_port
+  vars.pgactivity_database = host.vars.postgresql_database
+  vars.pgactivity_service = "is_replay_paused"
+  command_endpoint = host.vars.endpoint
+
+  assign where host.vars.postgresql_is_replay_paused == true
+}
+
+apply Service "Postgresql Is Backend Status Check" {
+  import "generic-service"
+  check_command = "pgactivity"
+  vars.notification_mail = "true"
+  vars.notification_telegram = "true"
+
+  vars.pgactivity_host = host.vars.postgresql_host
+  vars.pgactivity_user = host.vars.postgresql_user
+  vars.pgactivity_port = host.vars.postgresql_port
+  vars.pgactivity_database = host.vars.postgresql_database
+  vars.pgactivity_service = "backends_status"
+  command_endpoint = host.vars.endpoint
+
+  assign where host.vars.postgresql_backend_status == true
+}
+
+apply Service "Postgresql Streaming Delta Check" {
+  import "generic-service"
+  check_command = "pgactivity"
+  vars.notification_mail = "true"
+  vars.notification_telegram = "true"
+
+  vars.pgactivity_host = host.vars.postgresql_host
+  vars.pgactivity_user = host.vars.postgresql_user
+  vars.pgactivity_port = host.vars.postgresql_port
+  vars.pgactivity_database = host.vars.postgresql_database
+  vars.pgactivity_service = "streaming_delta"
+  vars.pgactivity_warning = host.vars.postgresql_streaming_delta_warning
+  vars.pgactivity_critical = host.vars.postgresql_streaming_delta_critical
+  command_endpoint = host.vars.endpoint
+
+  assign where host.vars.postgresql_streaming_delta == true
+}
+
+apply Service "Postgresql Backends Check" {
+  import "generic-service"
+  check_command = "pgactivity"
+  vars.notification_mail = "true"
+  vars.notification_telegram = "true"
+
+  vars.pgactivity_host = host.vars.postgresql_host
+  vars.pgactivity_user = host.vars.postgresql_user
+  vars.pgactivity_port = host.vars.postgresql_port
+  vars.pgactivity_database = host.vars.postgresql_database
+  vars.pgactivity_service = "backends"
+  vars.pgactivity_warning = host.vars.postgresql_backends_warning
+  vars.pgactivity_critical = host.vars.postgresql_backends_critical
+  command_endpoint = host.vars.endpoint
+
+  assign where host.vars.postgresql_backends == true
+}
+
+apply Service "Postgresql Longest Query" {
+  import "generic-service"
+  check_command = "pgactivity"
+  vars.notification_mail = "true"
+  vars.notification_telegram = "true"
+
+  vars.pgactivity_host = host.vars.postgresql_host
+  vars.pgactivity_user = host.vars.postgresql_user
+  vars.pgactivity_port = host.vars.postgresql_port
+  vars.pgactivity_database = host.vars.postgresql_database
+  vars.pgactivity_service = "longest_query"
+  vars.pgactivity_warning = host.vars.postgresql_longest_query_warning
+  vars.pgactivity_critical = host.vars.postgresql_longest_query_critical
+  command_endpoint = host.vars.endpoint
+
+  assign where host.vars.postgresql_longest_query == true
+}
+
+apply Service "Activemq queue size " for (target => config in host.vars.activemq_address) {
+  import "generic-service"
+  check_command = "activemq"
+  vars.notification_mail = "true"
+{% if icinga2_notification_telegram is defined %}
+  vars.notification_telegram = "true"
+{% endif %}
+
+  vars += config
+  notes = "Activemq queue size for target"
+  vars.activemq_address = target
+  vars.activemq_user = config.activemq_user
+  vars.activemq_password = config.activemq_password
+  vars.activemq_port = config.activemq_port
+  vars.activemq_queue_type = config.activemq_queue_type
+  vars.activemq_queue_name = config.activemq_queue_name
+  vars.activemq_queue_warning = config.activemq_queue_warning
+  vars.activemq_queue_critical = config.activemq_queue_critical
+  command_endpoint = config.endpoint
+
+  assign where host.vars.activemq_address
+}

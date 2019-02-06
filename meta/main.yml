@@ -1,0 +1,16 @@
+---
+
+galaxy_info:
+  author: Lorenzo Comotti
+  description: Playbook for Icinga2 Master.
+  license: MIT
+  min_ansible_version: 2.3
+  platforms:
+    - name: Ubuntu
+      versions:
+        - xenial
+        - trusty
+  galaxy_tags:
+    - molecule
+    - monitoring
+    - icinga2
