@@ -6,4 +6,4 @@
 - name: run the main role
   hosts: icinga2_master
   roles:
-    - {role: ansible-icinga2-master}
+    - {role: ansible-role-icinga2}
